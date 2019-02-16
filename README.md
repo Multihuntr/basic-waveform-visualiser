@@ -35,6 +35,8 @@ Creates a bunch of files and folders, the executable is `./dist/viewer/viewer.ex
 
 `Width` - line width
 
-`Gain` - multiplies the amplitudes. Tweak this to make the peaks line up with the volume.
+`Gain` - multiplies the wave amplitude.
 
-`Steepness`/`Curviness` - settings for the waveform envelope. Primarily to force the waveform envelope to be vaguely eye-shaped. Curviness defines how much the edges get pinched (1 - no tapering, 2 - tapering to the mean at the edges, 10 - essentially a cut-off at a certain point), and steepness defines what proportion of the waveform gets tapered. Try setting Curviness really high (about 10) and vary steepness to get an idea of what it does.
+`Steepness`/`Curviness` - settings for the waveform envelope. Primarily to force the waveform envelope to be vaguely eye-shaped. Curviness defines how much the edges get pinched (1 - no tapering, 2 - tapering to the mean at the edges, 10 - essentially a sharp cut-off at a certain point), and steepness defines what proportion of the waveform gets tapered. Try setting Curviness really high (about 10) and vary steepness to get an idea of what it does.
+
+`Momentum` - applies a momentum to the temporal aspect. Allows you to smooth out the vertical motion of the line. Less realism for a smoother line. (0 - no momentum, most realistic, shaky line, 0.95 - very slowly moving, smooth line). Suggestion: increase gain as you increase momentum.
