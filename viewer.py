@@ -15,7 +15,7 @@ class LineDrawer(tk.Canvas):
 	Canvas that draws lines based on some loudnesses.
 	'''
 	def __init__(self, root, width, height, get_loudnesses, min_thresh, max_thresh,
-				line_width, gain, steepness, curviness):
+				line_width, gain, steepness, curviness, momentum):
 		'''
 		Args:
 			self
@@ -30,6 +30,7 @@ class LineDrawer(tk.Canvas):
 			gain (tk.StringVar): Gain on audio as string, casts to float
 			steepness (tk.StringVar): Steepness on envelope for tapering, casts to float
 			curviness (tk.StringVar): Curviness on envelope for tapering, casts to float
+			momentum (tk.StringVar): Momentum on a per-element basis of waveform buffer, casts to float
 		'''
 		super().__init__(root, width=width, height=height)
 		self.root = root
@@ -45,6 +46,8 @@ class LineDrawer(tk.Canvas):
 		self.colour = 'blue'
 		self.steepness = steepness
 		self.curviness = curviness
+		self.momentum = momentum
+		self.prev = None
 
 	def change_colour(self):
 		self.colour = tkinter.colorchooser.askcolor()[1]
@@ -66,7 +69,7 @@ class LineDrawer(tk.Canvas):
 		return v
 
 	def new_line(self, v):
-		# If the float can't be parsed, then do nothing
+		# If the floats can't be parsed, then do nothing
 		width = 0
 		gain = 1
 		try:
@@ -74,6 +77,7 @@ class LineDrawer(tk.Canvas):
 			gain = float(self.gain.get())
 			steepness = float(self.steepness.get())
 			curviness = float(self.curviness.get())
+			momentum = float(self.momentum.get())
 		except ValueError:
 			return
 		if steepness < 0 or steepness > 1:
@@ -83,6 +87,11 @@ class LineDrawer(tk.Canvas):
 		v *= float(gain)
 		v = self.taper(v, steepness, curviness)
 		v += 0.5
+
+		# Moving average per point
+		if self.prev is not None:
+			v = self.prev*(momentum) + v*(1-momentum)
+		self.prev = v
 
 		# Put in format for tkinter
 		xy = []
@@ -151,6 +160,8 @@ steepness = tk.StringVar()
 steepness.set("0.5")
 curviness = tk.StringVar()
 curviness.set("2.")
+momentum = tk.StringVar()
+momentum.set("0.")
 
 audio = Audio()
 ld = LineDrawer(root, width=1024, height=300,
@@ -160,7 +171,8 @@ ld = LineDrawer(root, width=1024, height=300,
 	line_width=line_width,
 	gain=gain,
 	steepness=steepness,
-	curviness=curviness)
+	curviness=curviness,
+	momentum=momentum)
 
 
 def set_background():
@@ -174,14 +186,16 @@ min_thresh_lbl = tk.Label(root, text="Min. Freq.")
 max_thresh_lbl = tk.Label(root, text="Max. Freq.")
 line_width_lbl = tk.Label(root, text="Width")
 gain_lbl = tk.Label(root, text="Gain (factor)")
-steepness_lbl = tk.Label(root, text="Steepness (factor)")
+steepness_lbl = tk.Label(root, text="Steepness (0-1)")
 curviness_lbl = tk.Label(root, text="Curviness (factor)")
+momentum_lbl = tk.Label(root, text="Momentum (0-1)")
 min_thresh_box = tk.Entry(root, textvariable=min_thresh)
 max_thresh_box = tk.Entry(root, textvariable=max_thresh)
 line_width_box = tk.Entry(root, textvariable=line_width)
 gain_box = tk.Entry(root, textvariable=gain)
 steepness_box = tk.Entry(root, textvariable=steepness)
 curviness_box = tk.Entry(root, textvariable=curviness)
+momentum_box = tk.Entry(root, textvariable=momentum)
 change_colour_btn.pack(padx=5, side=tk.LEFT)
 bg_colour_btn.pack(padx=5, side=tk.LEFT)
 min_thresh_lbl.pack(padx=5, side=tk.LEFT)
@@ -196,6 +210,8 @@ steepness_lbl.pack(padx=5)
 steepness_box.pack(padx=5)
 curviness_lbl.pack(padx=5)
 curviness_box.pack(padx=5)
+momentum_lbl.pack(padx=5)
+momentum_box.pack(padx=5)
 
 ld.main_loop()
 
