@@ -79,7 +79,7 @@ class LineDrawer(tk.Canvas):
     self.delete('all')
     # Apply transformations
     v *= float(gain)
-    # v = self.taper(v, steepness, curviness)
+    v = self.taper(v, steepness, curviness)
     v += 0.5
 
     # Moving average per point
@@ -116,11 +116,10 @@ class LineDrawer(tk.Canvas):
       freqs = np.fft.rfftfreq(len(loudnesses), d=1/rate)
 
       # Zero out the frequencies below min and above max
-      # min_freq_idx = np.count_nonzero(freqs < min_thresh)
-      # max_freq_idx = np.count_nonzero(freqs < max_thresh)
-      # w[:min_freq_idx] = 0
-      # w[max_freq_idx:] = 0
-      w[0] = 0
+      min_freq_idx = np.count_nonzero(freqs < min_thresh)
+      max_freq_idx = np.count_nonzero(freqs < max_thresh)
+      w[:min_freq_idx] = 0
+      w[max_freq_idx:] = 0
 
       # Return it to loudnesses, sampling at the window width
       try:
