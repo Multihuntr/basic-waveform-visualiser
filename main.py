@@ -1,8 +1,3 @@
-import os
-import pyaudio
-import threading
-import math
-import wave
 import tkinter as tk
 import tkinter.colorchooser
 
