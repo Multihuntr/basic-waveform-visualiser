@@ -34,6 +34,8 @@ curviness = tk.StringVar()
 curviness.set(c.curviness or "2.")
 momentum = tk.StringVar()
 momentum.set(c.momentum or "0.")
+min_loud_thresh = tk.StringVar()
+min_loud_thresh.set(c.min_loud_thresh or "0.")
 
 
 
@@ -53,6 +55,7 @@ gain_lbl = tk.Label(opts_w, text="Gain (factor)")
 steepness_lbl = tk.Label(opts_w, text="Steepness (0-1)")
 curviness_lbl = tk.Label(opts_w, text="Curviness (factor)")
 momentum_lbl = tk.Label(opts_w, text="Momentum (0-1)")
+min_loud_thresh_lbl = tk.Label(opts_w, text="Min. Loud. Thresh.(0-1)")
 line_colour_box = tk.Entry(opts_w, textvariable=line_colour)
 bg_colour_box = tk.Entry(opts_w, textvariable=bg_colour)
 min_thresh_box = tk.Entry(opts_w, textvariable=min_thresh)
@@ -62,6 +65,7 @@ gain_box = tk.Entry(opts_w, textvariable=gain)
 steepness_box = tk.Entry(opts_w, textvariable=steepness)
 curviness_box = tk.Entry(opts_w, textvariable=curviness)
 momentum_box = tk.Entry(opts_w, textvariable=momentum)
+min_loud_thresh_box = tk.Entry(opts_w, textvariable=min_loud_thresh)
 change_colour_btn.pack(padx=5, pady=3)
 line_colour_box.pack(padx=5, pady=3)
 bg_colour_btn.pack(padx=5, pady=3)
@@ -80,11 +84,13 @@ curviness_lbl.pack(padx=40, pady=3)
 curviness_box.pack(padx=40, pady=3)
 momentum_lbl.pack(padx=40, pady=3)
 momentum_box.pack(padx=40, pady=3)
+min_loud_thresh_lbl.pack(padx=40, pady=3)
+min_loud_thresh_box.pack(padx=40, pady=3)
 
 
 # Create line canvas
 audio = Audio()
-ld = LineDrawer(line_w, width=1024, height=50,
+ld = LineDrawer(line_w, min_width=1024, min_height=50,
   get_loudnesses=audio.loudnesses,
   line_colour=line_colour,
   bg_colour=bg_colour,
@@ -94,14 +100,15 @@ ld = LineDrawer(line_w, width=1024, height=50,
   gain=gain,
   steepness=steepness,
   curviness=curviness,
-  momentum=momentum)
+  momentum=momentum,
+  min_loud_thresh=min_loud_thresh)
+line_w.geometry(c.geom)
 ld.pack(fill="both", expand=True)
 
 # Ensure variables are saved on exit
-def close(*args):
-	print(args)
-	line_w.destroy()
+def close():
 	conf.save(conf_filename, {
+		'geom': line_w.geometry(),
 		'line_colour': line_colour.get(),
 	  'bg_colour': bg_colour.get(),
 	  'min_thresh': min_thresh.get(),
@@ -112,6 +119,7 @@ def close(*args):
 	  'curviness': curviness.get(),
 	  'momentum': momentum.get(),
 	})
+	line_w.destroy()
 opts_w.protocol("WM_DELETE_WINDOW", close)
 line_w.protocol("WM_DELETE_WINDOW", close)
 

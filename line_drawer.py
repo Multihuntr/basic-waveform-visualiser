@@ -5,14 +5,15 @@ class LineDrawer(tk.Canvas):
   '''
   Canvas that draws lines based on some loudnesses.
   '''
-  def __init__(self, root, width, height, get_loudnesses, line_colour, bg_colour,
-        min_thresh, max_thresh, line_width, gain, steepness, curviness, momentum):
+  def __init__(self, root, min_width, min_height, get_loudnesses, line_colour, bg_colour,
+        min_thresh, max_thresh, line_width, gain, steepness, curviness, momentum,
+        min_loud_thresh):
     '''
     Args:
       self
       root (tk.Tk): container to hold canvas
-      width (int): minimum pixel width of canvas
-      height (int): minimumm pixel height of canvas
+      min_width (int): minimum pixel width of canvas
+      min_height (int): minimumm pixel height of canvas
       get_loudnesses (callable): takes no parameters, returns list of
         loudnesses at discrete time steps
       line_colour (tk.StringVar): Colour of the line to draw
@@ -24,12 +25,12 @@ class LineDrawer(tk.Canvas):
       steepness (tk.StringVar): Steepness on envelope for tapering, casts to float
       curviness (tk.StringVar): Curviness on envelope for tapering, casts to float
       momentum (tk.StringVar): Momentum on a per-element basis of waveform buffer, casts to float
+      min_loud_thresh (tk.StringVar): Minimum loudness threshold required to show a waveform
     '''
     super().__init__(root)
     self.root = root
-    self.min_width = width
-    self.min_height = height
-    root.geometry(f'{width}x{height}')
+    self.min_width = min_width
+    self.min_height = min_height
     self.get_loudnesses = get_loudnesses
 
     self.line_colour = line_colour
@@ -43,6 +44,7 @@ class LineDrawer(tk.Canvas):
     self.steepness = steepness
     self.curviness = curviness
     self.momentum = momentum
+    self.min_loud_thresh = min_loud_thresh
     self.prev = None
 
   def change_bg_colour(self, colour):
@@ -72,11 +74,14 @@ class LineDrawer(tk.Canvas):
       curviness = float(self.curviness.get())
       momentum = float(self.momentum.get())
       colour = self.line_colour.get()
+      min_loud_thresh = float(self.min_loud_thresh.get())
     except ValueError:
       return
     if steepness < 0 or steepness > 1:
       return
     self.delete('all')
+    if v.max() < min_loud_thresh/2:
+      v = np.zeros_like(v)
     # Apply transformations
     v *= float(gain)
     v = self.taper(v, steepness, curviness)
@@ -91,7 +96,7 @@ class LineDrawer(tk.Canvas):
     # Put in format for tkinter
     xy = []
     for (x,y) in enumerate(v):
-      xy.append(x)
+      xy.append(x*self.root.winfo_width()/self.min_width)
       xy.append(y*max(self.min_height, self.root.winfo_height()))
     try:
       self.create_line(xy, fill=colour, width=width)
@@ -121,10 +126,9 @@ class LineDrawer(tk.Canvas):
       w[:min_freq_idx] = 0
       w[max_freq_idx:] = 0
 
-      # Return it to loudnesses, sampling at the window width
+      # Return it to loudnesses, sampling the min_width number of elements
       try:
-        win_width = max(self.min_width, self.root.winfo_width())
-        cleaned = np.fft.irfft(w, n=win_width)
+        cleaned = np.fft.irfft(w, n=self.min_width)
       except:
         print('Exiting due to width not being readable')
         break
